@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Geotis - Hitung Bangun</title>
+
+<!-- LOGO TAB -->
+<link rel="icon" type="image/x-icon" href="logo.ico">
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: #e0e0e0;
+    padding: 20px;
+}
+
+h2 {
+    text-align: center;
+}
+
+.container {
+    max-width: 1000px;
+    margin: auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.box {
+    background: #f7f7f7;
+    padding: 20px;
+    border-radius: 12px;
+}
+
+select, input, button {
+    width: 100%;
+    padding: 10px;
+    margin-top: 8px;
+    font-size: 14px;
+}
+
+button {
+    cursor: pointer;
+    font-weight: bold;
+}
+
+#hasil {
+    margin-top: 15px;
+    font-size: 18px;
+}
+
+#riwayatBox {
+    display: none;
+    max-height: 300px;
+    overflow-y: auto;
+    margin-top: 10px;
+}
+
+li {
+    margin-bottom: 6px;
+}
+</style>
+</head>
+
+<body>
+
+<h2>Hitung Luas & Volume Bangun (Lengkap)</h2>
+
+<div class="container">
+
+<!-- KIRI -->
+<div class="box">
+    <select id="jenis" onchange="updateBangun()">
+        <option value="">-- Pilih Jenis Bangun --</option>
+        <option>Bangun Datar</option>
+        <option>Bangun Ruang</option>
+    </select>
+
+    <select id="bangun" onchange="buatInput()"></select>
+
+    <div id="inputs"></div>
+
+    <button onclick="hitung()">Hitung</button>
+    <div id="hasil"></div>
+</div>
+
+<!-- KANAN -->
+<div class="box">
+    <button id="btnRiwayat" onclick="toggleRiwayat()">Tampilkan Riwayat</button>
+    <button onclick="hapusRiwayat()">Hapus Riwayat</button>
+
+    <div id="riwayatBox">
+        <ul id="riwayat"></ul>
+    </div>
+</div>
+
+</div>
+
+<script>
+const bangunDatar = {
+    "Persegi": ["Sisi"],
+    "Persegi Panjang": ["Panjang", "Lebar"],
+    "Segitiga": ["Alas", "Tinggi"],
+    "Jajargenjang": ["Alas", "Tinggi"],
+    "Trapesium": ["Sisi A", "Sisi B", "Tinggi"],
+    "Belah Ketupat": ["Diagonal 1", "Diagonal 2"],
+    "Layang-layang": ["Diagonal 1", "Diagonal 2"],
+    "Lingkaran": ["Jari-jari"]
+};
+
+const bangunRuang = {
+    "Kubus": ["Rusuk"],
+    "Balok": ["Panjang", "Lebar", "Tinggi"],
+    "Prisma": ["Luas Alas", "Tinggi"],
+    "Limas": ["Luas Alas", "Tinggi"],
+    "Tabung": ["Luas Alas", "Tinggi"],
+    "Kerucut": ["Luas Alas", "Tinggi"],
+    "Bola": ["Jari-jari"]
+};
+
+let riwayat = [];
+
+function updateBangun() {
+    const jenis = jenisEl().value;
+    bangunEl().innerHTML = "";
+
+    const data = jenis === "Bangun Datar" ? bangunDatar : bangunRuang;
+    for (let b in data) {
+        bangunEl().innerHTML += `<option>${b}</option>`;
+    }
+    buatInput();
+}
+
+function buatInput() {
+    const jenis = jenisEl().value;
+    const bangun = bangunEl().value;
+    const inputs = document.getElementById("inputs");
+    inputs.innerHTML = "";
+
+    const data = jenis === "Bangun Datar" ? bangunDatar : bangunRuang;
+    if (!data[bangun]) return;
+
+    data[bangun].forEach(t => {
+        inputs.innerHTML += `<label>${t}</label><input type="number">`;
+    });
+}
+
+function hitung() {
+    const jenis = jenisEl().value;
+    const bangun = bangunEl().value;
+    const vals = [...document.querySelectorAll("#inputs input")].map(i => Number(i.value));
+
+    if (vals.includes(NaN)) {
+        alert("Isi semua angka dengan benar!");
+        return;
+    }
+
+    let hasil = 0;
+    const phi = Math.PI;
+
+    if (jenis === "Bangun Datar") {
+        if (bangun === "Persegi") hasil = vals[0] ** 2;
+        if (bangun === "Persegi Panjang") hasil = vals[0] * vals[1];
+        if (bangun === "Segitiga") hasil = vals[0] * vals[1] / 2;
+        if (bangun === "Jajargenjang") hasil = vals[0] * vals[1];
+        if (bangun === "Trapesium") hasil = (vals[0] + vals[1]) * vals[2] / 2;
+        if (bangun === "Belah Ketupat" || bangun === "Layang-layang") hasil = vals[0] * vals[1] / 2;
+        if (bangun === "Lingkaran") hasil = phi * vals[0] ** 2;
+        hasilEl(`Luas = ${hasil.toFixed(2)}`);
+    } else {
+        if (bangun === "Kubus") hasil = vals[0] ** 3;
+        if (bangun === "Balok") hasil = vals[0] * vals[1] * vals[2];
+        if (bangun === "Prisma" || bangun === "Tabung") hasil = vals[0] * vals[1];
+        if (bangun === "Limas" || bangun === "Kerucut") hasil = vals[0] * vals[1] / 3;
+        if (bangun === "Bola") hasil = 4/3 * phi * vals[0] ** 3;
+        hasilEl(`Volume = ${hasil.toFixed(2)}`);
+    }
+
+    riwayat.push(`${bangun} | Input: ${vals.join(", ")} | Hasil: ${hasil.toFixed(2)}`);
+    updateRiwayat();
+}
+
+function updateRiwayat() {
+    document.getElementById("riwayat").innerHTML =
+        riwayat.map(r => `<li>${r}</li>`).join("");
+}
+
+function toggleRiwayat() {
+    const box = document.getElementById("riwayatBox");
+    const btn = document.getElementById("btnRiwayat");
+    const buka = box.style.display === "block";
+    box.style.display = buka ? "none" : "block";
+    btn.textContent = buka ? "Tampilkan Riwayat" : "Tutup Riwayat";
+}
+
+function hapusRiwayat() {
+    riwayat = [];
+    updateRiwayat();
+}
+
+const jenisEl = () => document.getElementById("jenis");
+const bangunEl = () => document.getElementById("bangun");
+const hasilEl = t => document.getElementById("hasil").innerText = t;
+</script>
+
+</body>
+</html>
